@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://code.jquery.com/jquery-2.2.4.js"></script>
+</head>
+<body>
+<div>
+    <button onclick="join()">上线</button>
+    <button onclick="leave()">断开</button>
+    <button onclick="broadcast()">广播</button>
+    <button onclick="multicast()">组播</button>
+    <button onclick="send()">单播</button>
+    <button onclick="nodes()">NodeList</button>
+</div>
+NodeIDs:<textarea id="tos"></textarea>
+content:<textarea id="body"></textarea>
+<div id="show"></div>
+</body>
+<script>
+    function data() {
+        let body = $("#body").val();
+        let tos = $("#tos").val();
+        return {body: body, tos: tos}
+    }
+
+    function join() {
+        $.post("join", function (data) {
+            alert(data)
+        })
+    }
+
+    function leave() {
+        $.post("leave", function (data) {
+            alert(data)
+        })
+    }
+
+    function multicast() {
+        $.post("multicast", data(), function (data) {
+            alert(data)
+        })
+    }
+
+    function broadcast() {
+        $.post("broadcast", data(), function (data) {
+            alert(data)
+        })
+    }
+
+    function send() {
+        $.post("send", data(), function (data) {
+            alert(data)
+        })
+    }
+
+    function nodes() {
+        $.post("nodes", function (data) {
+            text = ""
+            for (i in data) {
+                text = text + data[i] + "<br>"
+            }
+
+            $("#show").html(text)
+        })
+    }
+</script>
+</html>
