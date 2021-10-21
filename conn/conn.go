@@ -32,31 +32,32 @@ func (d *DefaultConnect) death(err error) bool {
 	return false
 }
 
-func (d *DefaultConnect) Write(payload *msg.Payload) error {
+func (d *DefaultConnect) Write(payload *msg.Payload) {
 	if payload == nil {
-		return nil
+		return
 	}
-	d.l.Lock()
-	defer d.l.Unlock()
 	err := d.writeByte(payload.PackByte())
 	if d.death(err) {
 		d.Close()
 	}
-	return err
 }
 
-func (d *DefaultConnect) Read() (*msg.Payload, error) {
-	d.l.Lock()
-	defer d.l.Unlock()
+func (d *DefaultConnect) Read() *msg.Payload {
+	read, err := d.doRead()
+	if d.death(err) {
+		d.Close()
+		return nil
+	}
+	return read
+}
+
+func (d *DefaultConnect) doRead() (*msg.Payload, error) {
 	pkg, err := d.readByte()
 	if err != nil {
 		return nil, err
 	}
 	payload := &msg.Payload{}
 	err = payload.UNPackByte(pkg)
-	if d.death(err) {
-		d.Close()
-	}
 	return payload, err
 }
 

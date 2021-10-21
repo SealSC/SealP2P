@@ -55,7 +55,8 @@ func SendUdp(address string, p *msg.Payload) error {
 	}
 	defer dial.Close()
 	connect := conn.NewConnect(dial)
-	return connect.Write(p)
+	connect.Write(p)
+	return nil
 }
 
 type Listener struct {

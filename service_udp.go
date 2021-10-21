@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-	"github.com/SealSC/SealP2P/tools/ip"
 	"github.com/SealSC/SealP2P/conn/msg"
 )
 
@@ -40,11 +39,7 @@ func (m *Multicast) Listen() error {
 	}
 	go func() {
 		for m.started {
-			req, err := udp.Read()
-			if err != nil {
-				log.Println("udp read payload err", err)
-				continue
-			}
+			req := udp.Read()
 			go m.doReq(req)
 		}
 		_ = udp.Close()
@@ -74,20 +69,11 @@ func (m *Multicast) Offline() (err error) {
 	return m.SendMsg(payload)
 }
 
-func (m *Multicast) Online() (err error) {
-	var list []string
-	if net.ParseIP(MulticastIP).IsLoopback() {
-		list = []string{"127.0.0.1"}
-	} else {
-		list, err = ip.Available()
-		if err != nil {
-			return err
-		}
-	}
+func (m *Multicast) Online(ip []string) (err error) {
 	newPayload := NewPayload()
 	payload, err := NewJsonPayload(OnlineInfo{
 		NodeID:  newPayload.FromID,
-		IP:      list,
+		IP:      ip,
 		Port:    tcpPort,
 		Version: newPayload.Version,
 	})

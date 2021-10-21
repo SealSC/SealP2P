@@ -7,18 +7,31 @@
 </head>
 <body>
 <div>
+    <button onclick="log()">在console显示数据</button>
     <button onclick="join()">上线</button>
     <button onclick="leave()">断开</button>
     <button onclick="broadcast()">广播</button>
     <button onclick="multicast()">组播</button>
     <button onclick="send()">单播</button>
+    <button onclick="info()">NodeInfo</button>
     <button onclick="nodes()">NodeList</button>
 </div>
 NodeIDs:<textarea id="tos"></textarea>
 content:<textarea id="body"></textarea>
-<div id="show"></div>
+<div id="info"></div>
+<div id="list"></div>
 </body>
 <script>
+    function log() {
+        let socket = new WebSocket("ws://" + window.location.host + "/log");
+        socket.onopen = function (e) {
+            console.log(e)
+        };
+        socket.onmessage = function (event) {
+            console.log(event.data)
+        };
+    }
+
     function data() {
         let body = $("#body").val();
         let tos = $("#tos").val();
@@ -57,12 +70,28 @@ content:<textarea id="body"></textarea>
 
     function nodes() {
         $.post("nodes", function (data) {
-            text = ""
+            text = "<table border='1'><tr><th>NodeID</th><th>connIP</th><th>ip</th></tr>"
             for (i in data) {
-                text = text + data[i] + "<br>"
+                console.log(data[i])
+                text = text + "<tr>" +
+                    "<td>" + data[i].id + "</td>" +
+                    "<td>" + data[i].connIP + "</td>" +
+                    "<td>" + data[i].ip + "</td>" +
+                    "</tr>"
             }
 
-            $("#show").html(text)
+            $("#list").html(text)
+        })
+    }
+
+    function info() {
+        $.post("info", function (data) {
+            text = "<p>id:" + data.id + "</p>"
+            for (i in data.ip) {
+                text = text + data.ip[i] + ";&nbsp;"
+            }
+            text = text + "<p>online:" + data.online + "</p>"
+            $("#info").html(text)
         })
     }
 </script>

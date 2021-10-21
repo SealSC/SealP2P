@@ -32,26 +32,18 @@ var DefaultHandleMap = map[string]func(payload *msg.Payload) *msg.Payload{
 		localNode.network.CloseAndDel(request.FromID)
 		return nil
 	},
-	msg.Dail: func(request *msg.Payload) *msg.Payload {
-		log.Println("msg.Dail:", request.FromID, request)
-		return nil
-	},
-	msg.Multicast: func(request *msg.Payload) *msg.Payload {
-		log.Println("msg.Multicast:", request.FromID, request)
-		return nil
-	},
-	msg.Broadcast: func(request *msg.Payload) *msg.Payload {
-		log.Println("msg.Broadcast:", request.FromID, request)
-		return nil
-	},
 }
 
 type DefaultHandler struct {
 	customMap map[string]func(payload *msg.Payload) *msg.Payload
+	m         Messenger
 }
 
 func NewDefaultHandler() *DefaultHandler {
 	return &DefaultHandler{customMap: map[string]func(payload *msg.Payload) *msg.Payload{}}
+}
+func (d *DefaultHandler) SetMessenger(m Messenger) {
+	d.m = m
 }
 
 func (d *DefaultHandler) RegisterHandler(key string, f func(req *msg.Payload) *msg.Payload) {
@@ -62,9 +54,20 @@ func (d *DefaultHandler) doHandle(req *msg.Payload) *msg.Payload {
 	if req == nil {
 		return nil
 	}
-	//if req.FromID == localNode.nodeID {
+	//if req.FromID == localNode.GetNodeID() {
 	//	return nil
 	//}
+	switch req.Path {
+	case msg.Dail, msg.Multicast, msg.Broadcast:
+		if d.m != nil {
+			return d.m.OnMessage(req)
+		}
+		return nil
+	default:
+		if d.m != nil {
+			d.m.OnMessage(req)
+		}
+	}
 	if f := DefaultHandleMap[req.Path]; f != nil {
 		return f(req)
 	}

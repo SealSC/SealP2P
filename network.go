@@ -4,12 +4,31 @@ import (
 	"github.com/SealSC/SealP2P/conn/msg"
 )
 
+type NodeInfo struct {
+	ID     string   `json:"id"`
+	IP     []string `json:"ip"`
+	ConnIP string   `json:"connIP"`
+}
+
+type NodeStatus struct {
+	ID     string   `json:"id"`
+	IP     []string `json:"ip"`
+	Online bool     `json:"online"`
+}
+
+type Messenger interface {
+	OnMessage(p *msg.Payload) *msg.Payload
+}
+
 type NetNode interface {
+	SetMessenger(Messenger)
 	GetPubKey() []byte
+	//GetNodeStatus 获取本节点
+	GetNodeStatus() NodeStatus
 	//GetNodeID 获取本节点标识
 	GetNodeID() string
 	//GetNodeList 获取网络中的Node列表
-	GetNodeList() []string
+	GetNodeList() []NodeInfo
 	//Join 加入网络
 	Join() error
 	//Leave 离开网络
@@ -25,6 +44,7 @@ type NetNode interface {
 }
 
 type Handler interface {
+	SetMessenger(Messenger)
 	RegisterHandler(string, func(req *msg.Payload) *msg.Payload)
 	doHandle(req *msg.Payload) *msg.Payload
 }

@@ -7,8 +7,8 @@ import (
 type Connect interface {
 	Close() error
 	Closed() bool
-	Write(payload *msg.Payload) error
-	Read() (*msg.Payload, error)
+	Write(payload *msg.Payload)
+	Read() *msg.Payload
 	writeByte([]byte) error
 	readByte() ([]byte, error)
 }

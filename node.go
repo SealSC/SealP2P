@@ -8,24 +8,42 @@ import (
 	"github.com/SealSC/SealP2P/conn/msg"
 	"github.com/SealSC/SealP2P/tools/gio"
 	"errors"
+	"github.com/SealSC/SealP2P/tools/ip"
 )
 
 type Node struct {
-	nodeID  string
 	key     *rsa.PrivateKey
 	network *Network
 	h       Handler
+	status  NodeStatus
 }
 
+func (n *Node) SetMessenger(m Messenger) {
+	if n.h != nil {
+		n.h.SetMessenger(m)
+	}
+}
 func (n *Node) GetPubKey() []byte {
 	return x509.MarshalPKCS1PublicKey(&n.key.PublicKey)
 }
+
 func (n *Node) GetNodeID() string {
-	return n.nodeID
+	return n.status.ID
+}
+func (n *Node) GetNodeStatus() NodeStatus {
+	return n.status
 }
 
-func (n *Node) GetNodeList() []string {
-	return n.network.NodeList()
+func (n *Node) GetNodeList() (list []NodeInfo) {
+	nodeList := n.network.NodeList()
+	for _, node := range nodeList {
+		list = append(list, NodeInfo{
+			ID:     node.NodeID,
+			IP:     node.IP,
+			ConnIP: node.connIP,
+		})
+	}
+	return list
 }
 
 func (n *Node) Join() error {
@@ -38,7 +56,12 @@ func (n *Node) Join() error {
 	if err != nil {
 		return err
 	}
-	return n.network.Online()
+	err = n.network.Online(n.status.IP)
+	if err != nil {
+		return err
+	}
+	n.status.Online = true
+	return nil
 }
 
 func (n *Node) Leave() error {
@@ -47,6 +70,7 @@ func (n *Node) Leave() error {
 	}
 	n.network.Discoverer.Stop()
 	n.network.Connector.Stop()
+	n.status.Online = false
 	return nil
 }
 
@@ -60,7 +84,7 @@ func (n *Node) SendMsg(data *msg.Payload) error {
 	data.Path = msg.Dail
 	conn, ok := n.network.Connector.GetConn(data.ToID[0])
 	if ok {
-		return conn.Write(data)
+		conn.Write(data)
 	}
 	return nil
 }
@@ -119,14 +143,22 @@ func newLocalNode(pkFile string) (*Node, error) {
 	if localNode != nil {
 		return localNode, nil
 	}
-	n := &Node{}
-	n.network = NewNetwork(NewDefaultHandler())
+	n := &Node{h: NewDefaultHandler()}
+	n.network = NewNetwork(n.h)
 	key, err := readRSA(pkFile)
 	if err != nil {
 		return nil, err
 	}
 	n.key = key
-	n.nodeID = grsa.PubSha1(key)
+	available, err := ip.Available()
+	if err != nil {
+		return nil, err
+	}
+	n.status = NodeStatus{
+		ID:     grsa.PubSha1(key),
+		IP:     available,
+		Online: false,
+	}
 	return n, nil
 }
 
@@ -142,8 +174,4 @@ func readRSA(pkFile string) (pk *rsa.PrivateKey, err error) {
 	}
 	err = grsa.SaveFile(pkFile, pk)
 	return pk, err
-}
-
-func (n *Node) ID() string {
-	return n.nodeID
 }

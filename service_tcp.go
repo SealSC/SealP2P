@@ -6,21 +6,12 @@ import (
 	"log"
 	"github.com/SealSC/SealP2P/conn"
 	"github.com/SealSC/SealP2P/conn/msg"
-	"crypto/rsa"
 	"net"
 )
 
 var (
 	tcpPort = 3333
 )
-
-type ConnedNode struct {
-	NodeID string
-	PubKey *rsa.PublicKey
-	pk     *rsa.PrivateKey
-	conn   conn.Connect
-	connIP string
-}
 
 type TcpService struct {
 	cache   map[string]ConnedNode
@@ -68,12 +59,8 @@ func (t *TcpService) Listen() error {
 }
 func (t *TcpService) onConn(conn conn.Connect) {
 	for t.started {
-		req, err := conn.Read()
-		if err != nil {
-			log.Println("conn read payload err:", err)
-			continue
-		}
-		if t.f != nil {
+		req := conn.Read()
+		if req != nil && t.f != nil {
 			resp := t.f(req)
 			conn.Write(resp)
 		}
@@ -85,10 +72,10 @@ func (t *TcpService) SaveConn(info ConnedNode) {
 	t.lock.Unlock()
 	t.cache[info.NodeID] = info
 }
-func (t *TcpService) NodeList() (list []string) {
+func (t *TcpService) NodeList() (list []ConnedNode) {
 	t.lock.Lock()
 	t.lock.Unlock()
-	for s := range t.cache {
+	for _, s := range t.cache {
 		list = append(list, s)
 	}
 	return list
@@ -145,6 +132,7 @@ func (t *TcpService) DoConn(nodeID string, port int, ip []string) error {
 		}
 		if con != nil {
 			node.connIP = ip[i]
+			node.IP = ip
 			break
 		}
 	}

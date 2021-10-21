@@ -10,8 +10,8 @@ func NewJsonPayload(body interface{}) (*msg.Payload, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &msg.Payload{FromID: localNode.nodeID, Version: version, Body: marshal}, nil
+	return &msg.Payload{FromID: localNode.GetNodeID(), Version: version, Body: marshal}, nil
 }
 func NewPayload() *msg.Payload {
-	return &msg.Payload{FromID: localNode.nodeID, Version: version}
+	return &msg.Payload{FromID: localNode.GetNodeID(), Version: version}
 }
