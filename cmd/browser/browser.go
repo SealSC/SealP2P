@@ -24,14 +24,14 @@ func (w *wsMSG) OnMessage(p *msg.Payload) *msg.Payload {
 }
 
 //go:embed index.html
-var indexHTML string
+var indexHTML []byte
 
 func main() {
 	node := SealP2P.LocalNode()
 	engine := gin.New()
 	log.Println("node id:", node.GetNodeID())
 	engine.GET("/", func(c *gin.Context) {
-		c.Writer.Write([]byte(indexHTML))
+		c.Writer.Write(indexHTML)
 	})
 
 	engine.Any("/log", func(c *gin.Context) {
