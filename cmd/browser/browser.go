@@ -35,7 +35,6 @@ func main() {
 	})
 
 	engine.Any("/log", func(c *gin.Context) {
-		//升级get请求为webSocket协议
 		ws, err := upGrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			return

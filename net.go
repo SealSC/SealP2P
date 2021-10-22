@@ -15,11 +15,8 @@ type OnlineInfo struct {
 }
 
 type Network struct {
-	//服务发现
 	Discoverer
-	//服务连接
 	Connector
-	//服务处理
 }
 
 func NewNetwork(nodeID string, h Handler) (*Network, error) {
