@@ -111,6 +111,12 @@ func (d *DefaultTCPConnect) doRead() (*msg.Payload, error) {
 	}
 	payload := &msg.Payload{}
 	err = payload.UNPackByte(pkg)
+	if err != nil {
+		return nil, err
+	}
+	if payload.Path == "" {
+		return nil, nil
+	}
 	return payload, err
 }
 
