@@ -19,6 +19,12 @@ type Multicast struct {
 	started bool
 }
 
+func (m *Multicast) Started() bool {
+	m.l.Lock()
+	defer m.l.Unlock()
+	return m.started
+}
+
 func NewMulticast() *Multicast {
 	return &Multicast{}
 }
@@ -26,9 +32,13 @@ func (m *Multicast) On(f func(req *msg.Payload) *msg.Payload) {
 	m.f = f
 }
 func (m *Multicast) Stop() {
+	m.l.Lock()
+	defer m.l.Unlock()
 	m.started = false
 }
 func (m *Multicast) Listen() error {
+	m.l.Lock()
+	defer m.l.Unlock()
 	if m.started {
 		return nil
 	}

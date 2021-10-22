@@ -4,6 +4,7 @@ import (
 	"net"
 	"github.com/SealSC/SealP2P/conn"
 	"github.com/SealSC/SealP2P/conn/msg"
+	"errors"
 )
 
 type OnlineInfo struct {
@@ -21,28 +22,23 @@ type Network struct {
 	//服务处理
 }
 
-func NewNetwork(h Handler) *Network {
-	t := NewTcpService()
-	t.On(h.doHandle)
-	m := NewMulticast()
-	m.On(h.doHandle)
-	return &Network{Discoverer: m, Connector: t}
-}
-
-func Listen(network, address string) (*Listener, error) {
-	listen, err := net.Listen(network, address)
+func NewNetwork(nodeID string, h Handler) (*Network, error) {
+	t, err := NewTcpService(nodeID)
 	if err != nil {
 		return nil, err
 	}
-	return &Listener{listen}, nil
+	t.On(h.doHandle)
+	m := NewMulticast()
+	m.On(h.doHandle)
+	return &Network{Discoverer: m, Connector: t}, err
 }
 
-func ListenMulticastUDP(network string, ifi *net.Interface, gaddr *net.UDPAddr) (conn.Connect, error) {
+func ListenMulticastUDP(network string, ifi *net.Interface, gaddr *net.UDPAddr) (conn.UDPConnect, error) {
 	udp, err := net.ListenMulticastUDP(network, ifi, gaddr)
 	if err != nil {
 		return nil, err
 	}
-	return conn.NewConnect(udp), err
+	return conn.NewUDPConnect(udp, true), err
 }
 
 func SendUdp(address string, p *msg.Payload) error {
@@ -54,23 +50,36 @@ func SendUdp(address string, p *msg.Payload) error {
 		return err
 	}
 	defer dial.Close()
-	connect := conn.NewConnect(dial)
+	connect := conn.NewUDPConnect(dial, false)
 	connect.Write(p)
 	return nil
 }
 
-type Listener struct {
-	l net.Listener
+type TCPListener struct {
+	l      net.Listener
+	nodeID string
 }
 
-func (l *Listener) accept() (conn.Connect, error) {
+func ListenTCP(nodeID, address string) (*TCPListener, error) {
+	listen, err := net.Listen("tcp", address)
+	if err != nil {
+		return nil, err
+	}
+	if nodeID == "" {
+		return nil, errors.New("nodeID empty")
+	}
+	listener := &TCPListener{l: listen, nodeID: nodeID}
+	return listener, nil
+}
+
+func (l *TCPListener) accept() (conn.TCPConnect, error) {
 	accept, err := l.l.Accept()
 	if err != nil {
 		return nil, err
 	}
-	return conn.NewConnect(accept), err
+	return conn.NewTCPConnect(accept, false, l.nodeID), err
 }
 
-func (l *Listener) Close() error {
+func (l *TCPListener) Close() error {
 	return l.l.Close()
 }

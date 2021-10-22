@@ -70,13 +70,13 @@ content:<textarea id="body"></textarea>
 
     function nodes() {
         $.post("nodes", function (data) {
-            text = "<table border='1'><tr><th>NodeID</th><th>connIP</th><th>ip</th></tr>"
+            text = "<table border='1'><tr><th>NodeID</th><th>addr</th><th>type</th></tr>"
             for (i in data) {
                 console.log(data[i])
                 text = text + "<tr>" +
                     "<td>" + data[i].id + "</td>" +
-                    "<td>" + data[i].connIP + "</td>" +
-                    "<td>" + data[i].ip + "</td>" +
+                    "<td>" + data[i].addr + "</td>" +
+                    "<td>" + data[i].type + "</td>" +
                     "</tr>"
             }
 
@@ -90,7 +90,8 @@ content:<textarea id="body"></textarea>
             for (i in data.ip) {
                 text = text + data.ip[i] + ";&nbsp;"
             }
-            text = text + "<p>online:" + data.online + "</p>"
+            text = text + "<p>dis:" + data.dis + "</p>"
+            text = text + "<p>ser:" + data.ser + "</p>"
             $("#info").html(text)
         })
     }

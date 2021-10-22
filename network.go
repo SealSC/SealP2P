@@ -2,18 +2,20 @@ package SealP2P
 
 import (
 	"github.com/SealSC/SealP2P/conn/msg"
+	"github.com/SealSC/SealP2P/conn"
 )
 
 type NodeInfo struct {
-	ID     string   `json:"id"`
-	IP     []string `json:"ip"`
-	ConnIP string   `json:"connIP"`
+	ID   string    `json:"id"`
+	Addr string    `json:"addr"`
+	Type conn.Type `json:"type"`
 }
 
 type NodeStatus struct {
-	ID     string   `json:"id"`
-	IP     []string `json:"ip"`
-	Online bool     `json:"online"`
+	ID  string   `json:"id"`
+	IP  []string `json:"ip"`
+	Dis bool     `json:"dis"`
+	Ser bool     `json:"ser"`
 }
 
 type Messenger interface {

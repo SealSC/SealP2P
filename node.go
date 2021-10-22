@@ -31,6 +31,8 @@ func (n *Node) GetNodeID() string {
 	return n.status.ID
 }
 func (n *Node) GetNodeStatus() NodeStatus {
+	n.status.Dis = n.network.Discoverer.Started()
+	n.status.Ser = n.network.Connector.Started()
 	return n.status
 }
 
@@ -38,9 +40,9 @@ func (n *Node) GetNodeList() (list []NodeInfo) {
 	nodeList := n.network.NodeList()
 	for _, node := range nodeList {
 		list = append(list, NodeInfo{
-			ID:     node.NodeID,
-			IP:     node.IP,
-			ConnIP: node.connIP,
+			ID:   node.NodeID,
+			Addr: node.Addr,
+			Type: node.conn.Type(),
 		})
 	}
 	return list
@@ -60,7 +62,6 @@ func (n *Node) Join() error {
 	if err != nil {
 		return err
 	}
-	n.status.Online = true
 	return nil
 }
 
@@ -70,7 +71,6 @@ func (n *Node) Leave() error {
 	}
 	n.network.Discoverer.Stop()
 	n.network.Connector.Stop()
-	n.status.Online = false
 	return nil
 }
 
@@ -144,7 +144,6 @@ func newLocalNode(pkFile string) (*Node, error) {
 		return localNode, nil
 	}
 	n := &Node{h: NewDefaultHandler()}
-	n.network = NewNetwork(n.h)
 	key, err := readRSA(pkFile)
 	if err != nil {
 		return nil, err
@@ -155,10 +154,14 @@ func newLocalNode(pkFile string) (*Node, error) {
 		return nil, err
 	}
 	n.status = NodeStatus{
-		ID:     grsa.PubSha1(key),
-		IP:     available,
-		Online: false,
+		ID: grsa.PubSha1(key),
+		IP: available,
 	}
+	network, err := NewNetwork(n.GetNodeID(), n.h)
+	if err != nil {
+		return nil, err
+	}
+	n.network = network
 	return n, nil
 }
 

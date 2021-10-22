@@ -7,6 +7,7 @@ import (
 	"github.com/SealSC/SealP2P/conn"
 	"github.com/SealSC/SealP2P/conn/msg"
 	"net"
+	"errors"
 )
 
 var (
@@ -14,18 +15,28 @@ var (
 )
 
 type TcpService struct {
-	cache   map[string]ConnedNode
+	nodeID  string
+	cache   map[string]*ConnedNode
 	lock    sync.Mutex
 	started bool
 	f       func(req *msg.Payload) *msg.Payload
+}
+
+func (t *TcpService) Started() bool {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	return t.started
 }
 
 func (t *TcpService) On(f func(req *msg.Payload) *msg.Payload) {
 	t.f = f
 }
 
-func NewTcpService() *TcpService {
-	return &TcpService{cache: map[string]ConnedNode{}}
+func NewTcpService(nodeID string) (*TcpService, error) {
+	if nodeID == "" {
+		return nil, errors.New("newTcpService nodeID empty")
+	}
+	return &TcpService{nodeID: nodeID, cache: map[string]*ConnedNode{}}, nil
 }
 
 func (t *TcpService) Stop() {
@@ -41,7 +52,7 @@ func (t *TcpService) Listen() error {
 		return nil
 	}
 	t.started = true
-	listener, err := Listen("tcp", fmt.Sprintf(":%d", tcpPort))
+	listener, err := ListenTCP(t.nodeID, fmt.Sprintf(":%d", tcpPort))
 	if err != nil {
 		return err
 	}
@@ -51,23 +62,38 @@ func (t *TcpService) Listen() error {
 			if err != nil {
 				continue
 			}
-			go t.onConn(conn)
+			if err := t.goConn(conn); err != nil {
+				continue
+			}
 		}
 		_ = listener.Close()
 	}()
 	return nil
 }
-func (t *TcpService) onConn(conn conn.Connect) {
-	for t.started {
-		req := conn.Read()
-		if req != nil && t.f != nil {
-			resp := t.f(req)
-			conn.Write(resp)
-		}
+
+func (t *TcpService) goConn(conn conn.TCPConnect) error {
+	if err := conn.Handshake(); err != nil {
+		conn.Close()
+		return err
 	}
+	t.saveConn(&ConnedNode{
+		NodeID: conn.RemoteNodeID(),
+		conn:   conn,
+		Addr:   conn.RemoteAddr(),
+	})
+	go func() {
+		for t.started {
+			req := conn.Read()
+			if req != nil && t.f != nil {
+				resp := t.f(req)
+				conn.Write(resp)
+			}
+		}
+	}()
+	return nil
 }
 
-func (t *TcpService) SaveConn(info ConnedNode) {
+func (t *TcpService) saveConn(info *ConnedNode) {
 	t.lock.Lock()
 	t.lock.Unlock()
 	t.cache[info.NodeID] = info
@@ -76,7 +102,7 @@ func (t *TcpService) NodeList() (list []ConnedNode) {
 	t.lock.Lock()
 	t.lock.Unlock()
 	for _, s := range t.cache {
-		list = append(list, s)
+		list = append(list, *s)
 	}
 	return list
 }
@@ -85,7 +111,14 @@ func (t *TcpService) GetConn(key string) (conn.Connect, bool) {
 	t.lock.Lock()
 	t.lock.Unlock()
 	info, ok := t.cache[key]
-	if info.conn != nil && info.conn.Closed() {
+	if info == nil && ok {
+		delete(t.cache, key)
+		return nil, false
+	}
+	if !ok {
+		return nil, false
+	}
+	if info.conn != nil && info.conn.Status().Closed() {
 		info.conn.Close()
 		delete(t.cache, key)
 		return nil, false
@@ -97,7 +130,7 @@ func (t *TcpService) CloseAndDel(key string) {
 	t.lock.Lock()
 	t.lock.Unlock()
 	if t.cache == nil {
-		t.cache = map[string]ConnedNode{}
+		t.cache = map[string]*ConnedNode{}
 		return
 	}
 	info := t.cache[key]
@@ -107,23 +140,22 @@ func (t *TcpService) CloseAndDel(key string) {
 	delete(t.cache, key)
 }
 
-func (t *TcpService) DialTCP(addr string) (conn.Connect, error) {
+func (t *TcpService) DialTCP(addr string) (conn.TCPConnect, error) {
 	dial, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
-	return conn.NewConnect(dial), nil
+	return conn.NewTCPConnect(dial, true, t.nodeID), nil
 }
 
 func (t *TcpService) DoConn(nodeID string, port int, ip []string) error {
 	var (
-		con conn.Connect
+		con conn.TCPConnect
 		err error
 	)
 	if _, ok := t.GetConn(nodeID); ok {
 		return nil
 	}
-	node := ConnedNode{NodeID: nodeID}
 	for i := range ip {
 		addr := fmt.Sprintf("%s:%d", ip[i], port)
 		if con, err = t.DialTCP(addr); err != nil {
@@ -131,16 +163,11 @@ func (t *TcpService) DoConn(nodeID string, port int, ip []string) error {
 			continue
 		}
 		if con != nil {
-			node.connIP = ip[i]
-			node.IP = ip
 			break
 		}
 	}
 	if con == nil {
-		return fmt.Errorf("cannot connect node:%s ips:%v port:%d", node.NodeID, ip, port)
+		return fmt.Errorf("cannot connect node:%s ips:%v port:%d", nodeID, ip, port)
 	}
-	node.conn = con
-	t.SaveConn(node)
-	go t.onConn(con)
-	return nil
+	return t.goConn(con)
 }

@@ -7,14 +7,6 @@ import (
 )
 
 var DefaultHandleMap = map[string]func(payload *msg.Payload) *msg.Payload{
-	msg.PING: func(request *msg.Payload) *msg.Payload {
-		newPayload := NewPayload()
-		newPayload.Path = msg.PONG
-		return newPayload
-	},
-	msg.PONG: func(request *msg.Payload) *msg.Payload {
-		return nil
-	},
 	msg.Join: func(request *msg.Payload) *msg.Payload {
 		log.Println("join:", request.FromID, request)
 		info := OnlineInfo{}
@@ -27,7 +19,7 @@ var DefaultHandleMap = map[string]func(payload *msg.Payload) *msg.Payload{
 		}
 		return nil
 	},
-	msg.Leave: func(request *msg.Payload) *msg.Payload { //call local
+	msg.Leave: func(request *msg.Payload) *msg.Payload {
 		log.Println("msg.Leave:", request.FromID)
 		localNode.network.CloseAndDel(request.FromID)
 		return nil
@@ -54,9 +46,9 @@ func (d *DefaultHandler) doHandle(req *msg.Payload) *msg.Payload {
 	if req == nil {
 		return nil
 	}
-	//if req.FromID == localNode.GetNodeID() {
-	//	return nil
-	//}
+	if req.FromID == localNode.GetNodeID() {
+		return nil
+	}
 	switch req.Path {
 	case msg.Dail, msg.Multicast, msg.Broadcast:
 		if d.m != nil {

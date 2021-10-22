@@ -7,8 +7,7 @@ import (
 )
 
 type Discoverer interface {
-	Listen() error
-	Stop()
+	Listener
 	Online(ip []string) error
 	Offline() error
 	SendMsg(payload *msg.Payload) error
@@ -19,17 +18,20 @@ type ConnedNode struct {
 	NodeID string
 	PubKey *rsa.PublicKey
 	pk     *rsa.PrivateKey
-	conn   conn.Connect
-	IP     []string
-	connIP string
+	conn   conn.TCPConnect
+	Addr   string
 }
 
 type Connector interface {
-	Listen() error
-	Stop()
+	Listener
 	NodeList() (list []ConnedNode)
 	GetConn(key string) (conn.Connect, bool)
 	CloseAndDel(key string)
 	DoConn(nodeID string, port int, ip []string) error
 	On(func(req *msg.Payload) *msg.Payload)
+}
+type Listener interface {
+	Listen() error
+	Started() bool
+	Stop()
 }
