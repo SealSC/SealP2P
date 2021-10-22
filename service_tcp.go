@@ -60,7 +60,7 @@ func (t *TcpService) Listen() error {
 		for t.started {
 			conn, err := listener.accept()
 			if err != nil {
-				continue
+				panic(fmt.Errorf("listener accept err:%v", err))
 			}
 			if err := t.goConn(conn); err != nil {
 				continue
@@ -82,7 +82,7 @@ func (t *TcpService) goConn(conn conn.TCPConnect) error {
 		Addr:   conn.RemoteAddr(),
 	})
 	go func() {
-		for t.started {
+		for t.started && !conn.Status().Closed() {
 			req := conn.Read()
 			if req != nil && t.f != nil {
 				resp := t.f(req)

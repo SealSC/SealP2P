@@ -168,8 +168,7 @@ func newLocalNode(pkFile string) (*Node, error) {
 func readRSA(pkFile string) (pk *rsa.PrivateKey, err error) {
 	//Read the configuration if it exists
 	if gio.FileExist(pkFile) {
-		pk, err = grsa.LoadFile(pkFile)
-		return
+		return grsa.LoadFile(pkFile)
 	}
 	pk, err = grsa.RandKey()
 	if err != nil {

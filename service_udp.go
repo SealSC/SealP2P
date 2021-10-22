@@ -6,6 +6,7 @@ import (
 	"log"
 	"sync"
 	"github.com/SealSC/SealP2P/conn/msg"
+	"time"
 )
 
 var (
@@ -50,6 +51,9 @@ func (m *Multicast) Listen() error {
 	go func() {
 		for m.started {
 			req := udp.Read()
+			if req == nil {
+				time.Sleep(time.Millisecond * 500)
+			}
 			go m.doReq(req)
 		}
 		_ = udp.Close()

@@ -70,7 +70,7 @@ content:<textarea id="body"></textarea>
 
     function nodes() {
         $.post("nodes", function (data) {
-            text = "<table border='1'><tr><th>NodeID</th><th>addr</th><th>type</th></tr>"
+            text = "<table border='1'><tr><th>NodeID</th><th>remote addr</th><th>type</th></tr>"
             for (i in data) {
                 console.log(data[i])
                 text = text + "<tr>" +
@@ -95,5 +95,9 @@ content:<textarea id="body"></textarea>
             $("#info").html(text)
         })
     }
+
+    $(function () {
+        $("title").html(+window.location.host)
+    })
 </script>
 </html>
