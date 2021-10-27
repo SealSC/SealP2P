@@ -16,7 +16,7 @@ var (
 
 type Multicast struct {
 	l       sync.Mutex
-	f       func(req *msg.Payload) *msg.Payload
+	f       func(req *msg.Message) *msg.Message
 	started bool
 }
 
@@ -29,7 +29,7 @@ func (m *Multicast) Started() bool {
 func NewMulticast() *Multicast {
 	return &Multicast{}
 }
-func (m *Multicast) On(f func(req *msg.Payload) *msg.Payload) {
+func (m *Multicast) On(f func(req *msg.Message) *msg.Message) {
 	m.f = f
 }
 func (m *Multicast) Stop() {
@@ -61,11 +61,11 @@ func (m *Multicast) Listen() error {
 
 	return nil
 }
-func (m *Multicast) doReq(p *msg.Payload) {
+func (m *Multicast) doReq(p *msg.Message) {
 	if p == nil {
 		return
 	}
-	switch p.Path {
+	switch p.Type {
 	case msg.Join, msg.Leave, msg.Broadcast:
 		if m.f != nil {
 			m.f(p)
@@ -75,29 +75,28 @@ func (m *Multicast) doReq(p *msg.Payload) {
 	}
 }
 func (m *Multicast) Offline() (err error) {
-	payload, err := NewJsonPayload(nil)
+	payload, err := NewJsonMessage(nil)
 	if err != nil {
 		return err
 	}
-	payload.Path = msg.Leave
+	payload.Type = msg.Leave
 	return m.SendMsg(payload)
 }
 
 func (m *Multicast) Online(ip []string) (err error) {
-	newPayload := NewPayload()
-	payload, err := NewJsonPayload(OnlineInfo{
-		NodeID:  newPayload.FromID,
+	payload, err := NewJsonMessage(OnlineInfo{
+		NodeID:  localNode.GetNodeID(),
 		IP:      ip,
 		Port:    tcpPort,
-		Version: newPayload.Version,
+		Version: version,
 	})
 	if err != nil {
 		return err
 	}
-	payload.Path = msg.Join
+	payload.Type = msg.Join
 	return m.SendMsg(payload)
 }
-func (m *Multicast) SendMsg(p *msg.Payload) (err error) {
+func (m *Multicast) SendMsg(p *msg.Message) (err error) {
 	if p == nil {
 		return nil
 	}

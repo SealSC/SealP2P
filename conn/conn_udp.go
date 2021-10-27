@@ -26,7 +26,7 @@ func (d *DefaultUDPConnect) Multicast() bool {
 	return d.multicast
 }
 
-func (d *DefaultUDPConnect) Write(payload *msg.Payload) {
+func (d *DefaultUDPConnect) Write(payload *msg.Message) {
 	if payload == nil {
 		return
 	}
@@ -37,7 +37,7 @@ func (d *DefaultUDPConnect) Write(payload *msg.Payload) {
 	}
 }
 
-func (d *DefaultUDPConnect) Read() *msg.Payload {
+func (d *DefaultUDPConnect) Read() *msg.Message {
 	reader := bufio.NewReader(d.c)
 	i, err := binary.ReadVarint(reader)
 	if err != nil {
@@ -47,9 +47,9 @@ func (d *DefaultUDPConnect) Read() *msg.Payload {
 	if err != nil {
 		return nil
 	}
-	payload := &msg.Payload{}
+	payload := &msg.Message{}
 	err = payload.UNPackByte(all)
-	if payload.Path == "" {
+	if payload.Type == "" {
 		return nil
 	}
 	return payload

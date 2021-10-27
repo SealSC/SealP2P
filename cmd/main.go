@@ -18,7 +18,7 @@ func main() {
 		panic(err)
 	}
 	time.Sleep(time.Second * 2)
-	payload, err := SealP2P.NewJsonPayload("{}")
+	payload, err := SealP2P.NewJsonMessage("{}")
 	if err != nil {
 		panic(err)
 	}

@@ -19,7 +19,7 @@ type NodeStatus struct {
 }
 
 type Messenger interface {
-	OnMessage(p *msg.Payload) *msg.Payload
+	OnMessage(p *msg.Message) *msg.Message
 }
 
 type NetNode interface {
@@ -30,14 +30,14 @@ type NetNode interface {
 	GetNodeList() []NodeInfo
 	Join() error
 	Leave() error
-	SendMsg(data *msg.Payload) error
-	MulticastMsg(data *msg.Payload)
-	BroadcastMsg(data *msg.Payload) error
-	MsgProcessorRegister(string, func(req *msg.Payload) *msg.Payload)
+	SendMsg(data *msg.Message) error
+	MulticastMsg(data *msg.Message)
+	BroadcastMsg(data *msg.Message) error
+	MsgProcessorRegister(string, func(req *msg.Message) *msg.Message)
 }
 
 type Handler interface {
 	SetMessenger(Messenger)
-	RegisterHandler(string, func(req *msg.Payload) *msg.Payload)
-	doHandle(req *msg.Payload) *msg.Payload
+	RegisterHandler(string, func(req *msg.Message) *msg.Message)
+	doHandle(req *msg.Message) *msg.Message
 }

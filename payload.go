@@ -5,13 +5,17 @@ import (
 	"github.com/SealSC/SealP2P/conn/msg"
 )
 
-func NewJsonPayload(body interface{}) (*msg.Payload, error) {
+func NewJsonMessage(body interface{}) (*msg.Message, error) {
 	marshal, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
-	return &msg.Payload{FromID: localNode.GetNodeID(), Version: version, Body: marshal}, nil
+	return &msg.Message{FromID: localNode.GetNodeID(), Version: version, Payload: marshal}, nil
 }
-func NewPayload() *msg.Payload {
-	return &msg.Payload{FromID: localNode.GetNodeID(), Version: version}
+func EmptyMessage() *msg.Message {
+	return &msg.Message{FromID: localNode.GetNodeID(), Version: version}
+}
+
+func NewPayload(path string) *msg.Message {
+	return &msg.Message{FromID: localNode.GetNodeID(), Version: version, Type: path}
 }

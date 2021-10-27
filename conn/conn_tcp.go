@@ -33,21 +33,21 @@ func (d *DefaultTCPConnect) Handshake() error {
 	}
 	d.l.Lock()
 	defer d.l.Unlock()
-	payload := &msg.Payload{
+	payload := &msg.Message{
 		Version: "-",
 		FromID:  d.lNode,
-		Path:    msg.PING,
+		Type:    msg.PING,
 	}
 	d.Write(payload)
-	var c = make(chan *msg.Payload, 1)
+	var c = make(chan *msg.Message, 1)
 	select {
 	case <-time.After(time.Second * 10):
 		return errors.New("handshake read time out")
 	case c <- d.Read():
 	}
 	read := <-c
-	if read.Path != msg.PING {
-		return fmt.Errorf("handshake response path is \"%s\"", read.Path)
+	if read.Type != msg.PING {
+		return fmt.Errorf("handshake response path is \"%s\"", read.Type)
 	}
 	d.rNode = read.FromID
 	if read.FromID == d.lNode {
@@ -85,7 +85,7 @@ func (d *DefaultTCPConnect) death(err error) bool {
 	return false
 }
 
-func (d *DefaultTCPConnect) Write(payload *msg.Payload) {
+func (d *DefaultTCPConnect) Write(payload *msg.Message) {
 	if payload == nil {
 		return
 	}
@@ -95,7 +95,7 @@ func (d *DefaultTCPConnect) Write(payload *msg.Payload) {
 	}
 }
 
-func (d *DefaultTCPConnect) Read() *msg.Payload {
+func (d *DefaultTCPConnect) Read() *msg.Message {
 	read, err := d.doRead()
 	if d.death(err) {
 		d.Close()
@@ -104,17 +104,17 @@ func (d *DefaultTCPConnect) Read() *msg.Payload {
 	return read
 }
 
-func (d *DefaultTCPConnect) doRead() (*msg.Payload, error) {
+func (d *DefaultTCPConnect) doRead() (*msg.Message, error) {
 	pkg, err := d.readByte()
 	if err != nil {
 		return nil, err
 	}
-	payload := &msg.Payload{}
+	payload := &msg.Message{}
 	err = payload.UNPackByte(pkg)
 	if err != nil {
 		return nil, err
 	}
-	if payload.Path == "" {
+	if payload.Type == "" {
 		return nil, nil
 	}
 	return payload, err

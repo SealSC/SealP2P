@@ -38,7 +38,7 @@ func ListenMulticastUDP(network string, ifi *net.Interface, gaddr *net.UDPAddr) 
 	return conn.NewUDPConnect(udp, true), err
 }
 
-func SendUdp(address string, p *msg.Payload) error {
+func SendUdp(address string, p *msg.Message) error {
 	if p == nil {
 		return nil
 	}

@@ -74,14 +74,14 @@ func (n *Node) Leave() error {
 	return nil
 }
 
-func (n *Node) SendMsg(data *msg.Payload) error {
+func (n *Node) SendMsg(data *msg.Message) error {
 	if data == nil {
 		return nil
 	}
 	if len(data.ToID) < 1 {
 		return errors.New("invalid send destination")
 	}
-	data.Path = msg.Dail
+	data.Type = msg.Dail
 	conn, ok := n.network.Connector.GetConn(data.ToID[0])
 	if ok {
 		conn.Write(data)
@@ -89,7 +89,7 @@ func (n *Node) SendMsg(data *msg.Payload) error {
 	return nil
 }
 
-func (n *Node) MulticastMsg(data *msg.Payload) {
+func (n *Node) MulticastMsg(data *msg.Message) {
 	if data == nil {
 		return
 	}
@@ -97,7 +97,7 @@ func (n *Node) MulticastMsg(data *msg.Payload) {
 	for i := range data.ToID {
 		idSet[data.ToID[i]] = struct{}{}
 	}
-	data.Path = msg.Multicast
+	data.Type = msg.Multicast
 	for s := range idSet {
 		conn, ok := n.network.Connector.GetConn(s)
 		if ok {
@@ -107,15 +107,15 @@ func (n *Node) MulticastMsg(data *msg.Payload) {
 
 }
 
-func (n *Node) BroadcastMsg(data *msg.Payload) error {
+func (n *Node) BroadcastMsg(data *msg.Message) error {
 	if data == nil {
 		return nil
 	}
-	data.Path = msg.Broadcast
+	data.Type = msg.Broadcast
 	return n.network.Discoverer.SendMsg(data)
 }
 
-func (n *Node) MsgProcessorRegister(router string, f func(req *msg.Payload) *msg.Payload) {
+func (n *Node) MsgProcessorRegister(router string, f func(req *msg.Message) *msg.Message) {
 	n.h.RegisterHandler(router, f)
 }
 

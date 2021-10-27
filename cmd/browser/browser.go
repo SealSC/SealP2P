@@ -15,7 +15,7 @@ type wsMSG struct {
 	ws *websocket.Conn
 }
 
-func (w *wsMSG) OnMessage(p *msg.Payload) *msg.Payload {
+func (w *wsMSG) OnMessage(p *msg.Message) *msg.Message {
 	err := w.ws.WriteJSON(p)
 	if err != nil {
 		panic(err)
@@ -86,11 +86,11 @@ func main() {
 	}
 }
 
-func readForm(c *gin.Context) *msg.Payload {
+func readForm(c *gin.Context) *msg.Message {
 	body := c.PostForm("body")
 	tos := strings.Split(c.PostForm("tos"), "\n")
-	payload := SealP2P.NewPayload()
-	payload.Body = []byte(body)
+	payload := SealP2P.EmptyMessage()
+	payload.Payload = []byte(body)
 	payload.ToID = tos
 	return payload
 }

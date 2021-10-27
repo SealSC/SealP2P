@@ -19,7 +19,7 @@ type TcpService struct {
 	cache   map[string]*ConnedNode
 	lock    sync.Mutex
 	started bool
-	f       func(req *msg.Payload) *msg.Payload
+	f       func(req *msg.Message) *msg.Message
 }
 
 func (t *TcpService) Started() bool {
@@ -28,7 +28,7 @@ func (t *TcpService) Started() bool {
 	return t.started
 }
 
-func (t *TcpService) On(f func(req *msg.Payload) *msg.Payload) {
+func (t *TcpService) On(f func(req *msg.Message) *msg.Message) {
 	t.f = f
 }
 

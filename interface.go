@@ -10,8 +10,8 @@ type Discoverer interface {
 	Listener
 	Online(ip []string) error
 	Offline() error
-	SendMsg(payload *msg.Payload) error
-	On(func(req *msg.Payload) *msg.Payload)
+	SendMsg(payload *msg.Message) error
+	On(func(req *msg.Message) *msg.Message)
 }
 
 type ConnedNode struct {
@@ -28,7 +28,7 @@ type Connector interface {
 	GetConn(key string) (conn.Connect, bool)
 	CloseAndDel(key string)
 	DoConn(nodeID string, port int, ip []string) error
-	On(func(req *msg.Payload) *msg.Payload)
+	On(func(req *msg.Message) *msg.Message)
 }
 type Listener interface {
 	Listen() error

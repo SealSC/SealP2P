@@ -47,7 +47,7 @@ type TCPConnect interface {
 }
 
 type Connect interface {
-	Write(payload *msg.Payload)
-	Read() *msg.Payload
+	Write(payload *msg.Message)
+	Read() *msg.Message
 	Close() error
 }
