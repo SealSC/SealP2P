@@ -149,7 +149,9 @@ func InitLocalNode(conf *conf.Config) error {
 	if err != nil {
 		return err
 	}
-	conf.ID = grsa.PubSha1(key)
+	if conf.ID == "" {
+		conf.ID = grsa.PubSha1(key)
+	}
 	n.status = NodeStatus{
 		ID: conf.ID,
 		IP: available,
