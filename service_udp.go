@@ -7,14 +7,12 @@ import (
 	"sync"
 	"github.com/SealSC/SealP2P/conn/msg"
 	"time"
-)
-
-var (
-	MulticastIP   = "224.0.0.3"
-	MulticastPort = 5678
+	"github.com/SealSC/SealP2P/conf"
+	"errors"
 )
 
 type Multicast struct {
+	conf    *conf.Config
 	l       sync.Mutex
 	f       func(req *msg.Message) *msg.Message
 	started bool
@@ -26,8 +24,17 @@ func (m *Multicast) Started() bool {
 	return m.started
 }
 
-func NewMulticast() *Multicast {
-	return &Multicast{}
+func NewMulticast(conf *conf.Config) (*Multicast, error) {
+	if conf == nil {
+		return nil, errors.New("conf is nil")
+	}
+	if conf.MulticastPort < 0 || conf.MulticastPort > 65535 {
+		return nil, fmt.Errorf("port(%d) err", conf.MulticastPort)
+	}
+	if ip := net.ParseIP(conf.MulticastAddr); !ip.IsMulticast() {
+		return nil, fmt.Errorf("ip(%s) not Multicast", conf.MulticastAddr)
+	}
+	return &Multicast{conf: conf}, nil
 }
 func (m *Multicast) On(f func(req *msg.Message) *msg.Message) {
 	m.f = f
@@ -44,7 +51,7 @@ func (m *Multicast) Listen() error {
 		return nil
 	}
 	m.started = true
-	udp, err := ListenMulticastUDP("udp", nil, &net.UDPAddr{IP: net.ParseIP(MulticastIP), Port: MulticastPort})
+	udp, err := ListenMulticastUDP("udp", nil, &net.UDPAddr{IP: net.ParseIP(m.conf.MulticastAddr), Port: m.conf.ServerPort})
 	if err != nil {
 		return err
 	}
@@ -87,7 +94,7 @@ func (m *Multicast) Online(ip []string) (err error) {
 	payload, err := NewJsonMessage(OnlineInfo{
 		NodeID:  localNode.GetNodeID(),
 		IP:      ip,
-		Port:    tcpPort,
+		Port:    m.conf.ServerPort,
 		Version: version,
 	})
 	if err != nil {
@@ -100,5 +107,5 @@ func (m *Multicast) SendMsg(p *msg.Message) (err error) {
 	if p == nil {
 		return nil
 	}
-	return SendUdp(fmt.Sprintf("%s:%d", MulticastIP, MulticastPort), p)
+	return SendUdp(fmt.Sprintf("%s:%d", m.conf.MulticastAddr, m.conf.MulticastPort), p)
 }

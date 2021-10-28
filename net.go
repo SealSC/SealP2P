@@ -5,6 +5,7 @@ import (
 	"github.com/SealSC/SealP2P/conn"
 	"github.com/SealSC/SealP2P/conn/msg"
 	"errors"
+	"github.com/SealSC/SealP2P/conf"
 )
 
 type OnlineInfo struct {
@@ -19,13 +20,16 @@ type Network struct {
 	Connector
 }
 
-func NewNetwork(nodeID string, h Handler) (*Network, error) {
-	t, err := NewTcpService(nodeID)
+func NewNetwork(conf *conf.Config, h Handler) (*Network, error) {
+	t, err := NewTcpService(conf)
 	if err != nil {
 		return nil, err
 	}
 	t.On(h.doHandle)
-	m := NewMulticast()
+	m, err := NewMulticast(conf)
+	if err != nil {
+		return nil, err
+	}
 	m.On(h.doHandle)
 	return &Network{Discoverer: m, Connector: t}, err
 }

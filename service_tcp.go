@@ -8,14 +8,12 @@ import (
 	"github.com/SealSC/SealP2P/conn/msg"
 	"net"
 	"errors"
-)
-
-var (
-	tcpPort = 3333
+	"github.com/SealSC/SealP2P/conf"
 )
 
 type TcpService struct {
-	nodeID  string
+	conf *conf.Config
+
 	cache   map[string]*ConnedNode
 	lock    sync.Mutex
 	started bool
@@ -32,11 +30,14 @@ func (t *TcpService) On(f func(req *msg.Message) *msg.Message) {
 	t.f = f
 }
 
-func NewTcpService(nodeID string) (*TcpService, error) {
-	if nodeID == "" {
+func NewTcpService(conf *conf.Config) (*TcpService, error) {
+	if conf == nil {
+		return nil, errors.New("conf is nil")
+	}
+	if conf.ID == "" {
 		return nil, errors.New("newTcpService nodeID empty")
 	}
-	return &TcpService{nodeID: nodeID, cache: map[string]*ConnedNode{}}, nil
+	return &TcpService{conf: conf, cache: map[string]*ConnedNode{}}, nil
 }
 
 func (t *TcpService) Stop() {
@@ -52,7 +53,7 @@ func (t *TcpService) Listen() error {
 		return nil
 	}
 	t.started = true
-	listener, err := ListenTCP(t.nodeID, fmt.Sprintf(":%d", tcpPort))
+	listener, err := ListenTCP(t.conf.ID, fmt.Sprintf(":%d", t.conf.ServerPort))
 	if err != nil {
 		return err
 	}
@@ -145,7 +146,7 @@ func (t *TcpService) DialTCP(addr string) (conn.TCPConnect, error) {
 	if err != nil {
 		return nil, err
 	}
-	return conn.NewTCPConnect(dial, true, t.nodeID), nil
+	return conn.NewTCPConnect(dial, true, t.conf.ID), nil
 }
 
 func (t *TcpService) DoConn(nodeID string, port int, ip []string) error {

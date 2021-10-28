@@ -9,9 +9,11 @@ import (
 	"github.com/SealSC/SealP2P/tools/gio"
 	"errors"
 	"github.com/SealSC/SealP2P/tools/ip"
+	"github.com/SealSC/SealP2P/conf"
 )
 
 type Node struct {
+	conf    *conf.Config
 	key     *rsa.PrivateKey
 	network *Network
 	h       Handler
@@ -28,7 +30,7 @@ func (n *Node) GetPubKey() []byte {
 }
 
 func (n *Node) GetNodeID() string {
-	return n.status.ID
+	return n.conf.ID
 }
 func (n *Node) GetNodeStatus() NodeStatus {
 	n.status.Dis = n.network.Discoverer.Started()
@@ -49,12 +51,14 @@ func (n *Node) GetNodeList() (list []NodeInfo) {
 }
 
 func (n *Node) Join() error {
-	err := n.network.Connector.Listen()
-	if err != nil {
-		return err
+	if !n.conf.ClientOnly {
+		err := n.network.Connector.Listen()
+		if err != nil {
+			return err
+		}
 	}
 
-	err = n.network.Discoverer.Listen()
+	err := n.network.Discoverer.Listen()
 	if err != nil {
 		return err
 	}
@@ -126,43 +130,37 @@ func LocalNode() NetNode {
 	return localNode
 }
 
-func init() {
-	var once = sync.Once{}
-	once.Do(func() {
-		node, err := newLocalNode("SealP2PPK")
-		if err != nil {
-			panic("newLocalNode:" + err.Error())
-		}
-		localNode = node
-	})
-}
-
-func newLocalNode(pkFile string) (*Node, error) {
+func InitLocalNode(conf *conf.Config) error {
 	newLock.Lock()
 	newLock.Unlock()
 	if localNode != nil {
-		return localNode, nil
+		return nil
 	}
-	n := &Node{h: NewDefaultHandler()}
-	key, err := readRSA(pkFile)
+	if conf == nil {
+		return errors.New("conf is nil")
+	}
+	n := &Node{h: NewDefaultHandler(), conf: conf}
+	key, err := readRSA(conf.PKFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	n.key = key
 	available, err := ip.Available()
 	if err != nil {
-		return nil, err
+		return err
 	}
+	conf.ID = grsa.PubSha1(key)
 	n.status = NodeStatus{
-		ID: grsa.PubSha1(key),
+		ID: conf.ID,
 		IP: available,
 	}
-	network, err := NewNetwork(n.GetNodeID(), n.h)
+	network, err := NewNetwork(conf, n.h)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	n.network = network
-	return n, nil
+	localNode = n
+	return nil
 }
 
 func readRSA(pkFile string) (pk *rsa.PrivateKey, err error) {

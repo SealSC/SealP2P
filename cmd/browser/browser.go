@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	_ "embed"
+	"github.com/SealSC/SealP2P/conf"
 )
 
 type wsMSG struct {
@@ -27,6 +28,10 @@ func (w *wsMSG) OnMessage(p *msg.Message) *msg.Message {
 var indexHTML []byte
 
 func main() {
+	err := SealP2P.InitLocalNode(conf.DefaultConfig)
+	if err != nil {
+		panic(err)
+	}
 	node := SealP2P.LocalNode()
 	engine := gin.New()
 	log.Println("node id:", node.GetNodeID())
