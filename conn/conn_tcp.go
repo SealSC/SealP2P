@@ -36,7 +36,7 @@ func (d *DefaultTCPConnect) Handshake() error {
 	payload := &msg.Message{
 		Version: "-",
 		FromID:  d.lNode,
-		Type:    msg.PING,
+		Action:  msg.ActionPING,
 	}
 	d.Write(payload)
 	var c = make(chan *msg.Message, 1)
@@ -46,8 +46,8 @@ func (d *DefaultTCPConnect) Handshake() error {
 	case c <- d.Read():
 	}
 	read := <-c
-	if read.Type != msg.PING {
-		return fmt.Errorf("handshake response path is \"%s\"", read.Type)
+	if read.Action != msg.ActionPING {
+		return fmt.Errorf("handshake response path is \"%s\"", read.Action)
 	}
 	d.rNode = read.FromID
 	if read.FromID == d.lNode {
@@ -114,7 +114,7 @@ func (d *DefaultTCPConnect) doRead() (*msg.Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	if payload.Type == "" {
+	if payload.Action == "" {
 		return nil, nil
 	}
 	return payload, err

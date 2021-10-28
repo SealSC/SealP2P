@@ -17,5 +17,5 @@ func EmptyMessage() *msg.Message {
 }
 
 func NewPayload(path string) *msg.Message {
-	return &msg.Message{FromID: localNode.GetNodeID(), Version: version, Type: path}
+	return &msg.Message{FromID: localNode.GetNodeID(), Version: version, Action: path}
 }

@@ -65,13 +65,13 @@ func (m *Multicast) doReq(p *msg.Message) {
 	if p == nil {
 		return
 	}
-	switch p.Type {
-	case msg.Join, msg.Leave, msg.Broadcast:
+	switch p.Action {
+	case msg.ActionJoin, msg.ActionLeave, msg.ActionBroadcast:
 		if m.f != nil {
 			m.f(p)
 		}
 	default:
-		log.Println("Multicast don't know path:", p)
+		log.Println("ActionMulticast don't know path:", p)
 	}
 }
 func (m *Multicast) Offline() (err error) {
@@ -79,7 +79,7 @@ func (m *Multicast) Offline() (err error) {
 	if err != nil {
 		return err
 	}
-	payload.Type = msg.Leave
+	payload.Action = msg.ActionLeave
 	return m.SendMsg(payload)
 }
 
@@ -93,7 +93,7 @@ func (m *Multicast) Online(ip []string) (err error) {
 	if err != nil {
 		return err
 	}
-	payload.Type = msg.Join
+	payload.Action = msg.ActionJoin
 	return m.SendMsg(payload)
 }
 func (m *Multicast) SendMsg(p *msg.Message) (err error) {

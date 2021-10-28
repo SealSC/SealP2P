@@ -81,7 +81,7 @@ func (n *Node) SendMsg(data *msg.Message) error {
 	if len(data.ToID) < 1 {
 		return errors.New("invalid send destination")
 	}
-	data.Type = msg.Dail
+	data.Action = msg.ActionDail
 	conn, ok := n.network.Connector.GetConn(data.ToID[0])
 	if ok {
 		conn.Write(data)
@@ -97,7 +97,7 @@ func (n *Node) MulticastMsg(data *msg.Message) {
 	for i := range data.ToID {
 		idSet[data.ToID[i]] = struct{}{}
 	}
-	data.Type = msg.Multicast
+	data.Action = msg.ActionMulticast
 	for s := range idSet {
 		conn, ok := n.network.Connector.GetConn(s)
 		if ok {
@@ -111,7 +111,7 @@ func (n *Node) BroadcastMsg(data *msg.Message) error {
 	if data == nil {
 		return nil
 	}
-	data.Type = msg.Broadcast
+	data.Action = msg.ActionBroadcast
 	return n.network.Discoverer.SendMsg(data)
 }
 

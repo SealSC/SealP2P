@@ -7,7 +7,7 @@ import (
 )
 
 var DefaultHandleMap = map[string]func(payload *msg.Message) *msg.Message{
-	msg.Join: func(request *msg.Message) *msg.Message {
+	msg.ActionJoin: func(request *msg.Message) *msg.Message {
 		log.Println("join:", request.FromID, request)
 		info := OnlineInfo{}
 		err := json.Unmarshal(request.Payload, &info)
@@ -19,8 +19,8 @@ var DefaultHandleMap = map[string]func(payload *msg.Message) *msg.Message{
 		}
 		return nil
 	},
-	msg.Leave: func(request *msg.Message) *msg.Message {
-		log.Println("msg.Leave:", request.FromID)
+	msg.ActionLeave: func(request *msg.Message) *msg.Message {
+		log.Println("msg.ActionLeave:", request.FromID)
 		localNode.network.CloseAndDel(request.FromID)
 		return nil
 	},
@@ -55,8 +55,8 @@ func (d *DefaultHandler) doHandle(req *msg.Message) *msg.Message {
 	if req.FromID == localNode.GetNodeID() {
 		return nil
 	}
-	switch req.Type {
-	case msg.Dail, msg.Multicast, msg.Broadcast:
+	switch req.Action {
+	case msg.ActionDail, msg.ActionMulticast, msg.ActionBroadcast:
 		if d.m != nil {
 			return d.m.OnMessage(req)
 		}
@@ -66,13 +66,13 @@ func (d *DefaultHandler) doHandle(req *msg.Message) *msg.Message {
 			d.m.OnMessage(req)
 		}
 	}
-	if f := DefaultHandleMap[req.Type]; f != nil {
+	if f := DefaultHandleMap[req.Action]; f != nil {
 		return f(req)
 	}
 	if d.customMap == nil {
 		return nil
 	}
-	if f := d.customMap[req.Type]; f != nil {
+	if f := d.customMap[req.Action]; f != nil {
 		return f(req)
 	}
 	return nil

@@ -82,7 +82,7 @@ func TestDefaultHandler_doHandle(t *testing.T) {
 		want   *msg.Message
 	}{
 		{name: "001", fields: fields{customMap: nil}, args: args{req: nil}, want: nil},
-		{name: "local_req", fields: fields{customMap: nil}, args: args{req: NewPayload(msg.Join)}, want: nil},
+		{name: "local_req", fields: fields{customMap: nil}, args: args{req: NewPayload(msg.ActionJoin)}, want: nil},
 		{name: "003", fields: fields{customMap: map[string]func(payload *msg.Message) *msg.Message{"xxx1": func(*msg.Message) *msg.Message {
 			return xxxResp
 		}}}, args: args{req: xxxReq}, want: xxxResp},

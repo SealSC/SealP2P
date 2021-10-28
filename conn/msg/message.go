@@ -14,7 +14,7 @@ import (
 type Message struct {
 	Family    string
 	Version   string
-	Type      string
+	Action    string
 	Payload   []byte
 	Hash      []byte
 	Signature []byte
@@ -33,7 +33,7 @@ func (m *Message) PackByte() []byte {
 	hash.Write([]byte(fmt.Sprintf("%s%d%d", m.FromID, m.TS, int63)))
 	m.Hash = hash.Sum(nil)
 	tos := strings.Join(m.ToID, ";")
-	head := fmt.Sprintf("%s|%s|%s|%d|%s|%s\n", m.Version, m.FromID, m.Type, m.TS, tos, m.Hash)
+	head := fmt.Sprintf("%s|%s|%s|%d|%s|%s\n", m.Version, m.FromID, m.Action, m.TS, tos, m.Hash)
 	payload := append([]byte(head), m.Payload...)
 	return payload
 }
@@ -51,7 +51,7 @@ func (m *Message) UNPackByte(payload []byte) error {
 	}
 	m.Version = string(split[0])
 	m.FromID = string(split[1])
-	m.Type = string(split[2])
+	m.Action = string(split[2])
 	m.TS, _ = strconv.ParseInt(string(split[3]), 10, 64)
 	m.ToID = strings.Split(string(split[4]), ";")
 	m.Hash = split[5]
