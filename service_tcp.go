@@ -135,7 +135,7 @@ func (t *TcpService) CloseAndDel(key string) {
 		return
 	}
 	info := t.cache[key]
-	if info.conn != nil {
+	if info != nil && info.conn != nil {
 		info.conn.Close()
 	}
 	delete(t.cache, key)

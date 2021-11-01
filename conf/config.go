@@ -10,6 +10,17 @@ type Config struct {
 	MulticastPort int
 }
 
+func (c Config) Clone(id string) *Config {
+	return &Config{
+		ID:            id,
+		ClientOnly:    c.ClientOnly,
+		PKFile:        c.PKFile,
+		ServerPort:    c.ServerPort,
+		MulticastAddr: c.MulticastAddr,
+		MulticastPort: c.MulticastPort,
+	}
+}
+
 var DefaultConfig = &Config{
 	ID:            "",
 	ClientOnly:    false,
