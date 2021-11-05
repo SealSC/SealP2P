@@ -12,7 +12,7 @@ import (
 )
 
 type TcpService struct {
-	conf *conf.Config
+	conf conf.Config
 
 	cache   map[string]*ConnedNode
 	lock    sync.Mutex
@@ -30,10 +30,7 @@ func (t *TcpService) On(f func(req *msg.Message) *msg.Message) {
 	t.f = f
 }
 
-func NewTcpService(conf *conf.Config) (*TcpService, error) {
-	if conf == nil {
-		return nil, errors.New("conf is nil")
-	}
+func NewTcpService(conf conf.Config) (*TcpService, error) {
 	if conf.ID == "" {
 		return nil, errors.New("newTcpService nodeID empty")
 	}
@@ -52,18 +49,24 @@ func (t *TcpService) Listen() error {
 	if t.started {
 		return nil
 	}
+	nodeID := t.conf.ID
 	t.started = true
-	listener, err := ListenTCP(t.conf.ID, fmt.Sprintf(":%d", t.conf.ServerPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", t.conf.ServerPort))
 	if err != nil {
 		return err
 	}
 	go func() {
 		for t.started {
-			conn, err := listener.accept()
+			c, err := listener.Accept()
 			if err != nil {
 				panic(fmt.Errorf("listener accept err:%v", err))
 			}
-			if err := t.goConn(conn); err != nil {
+			connect, err := conn.NewTCPConnect(c, false, nodeID)
+			if err != nil {
+				c.Close()
+				panic(fmt.Errorf("listener accept err:%v", err))
+			}
+			if err := t.goConn(connect); err != nil {
 				continue
 			}
 		}
@@ -146,7 +149,7 @@ func (t *TcpService) DialTCP(addr string) (conn.TCPConnect, error) {
 	if err != nil {
 		return nil, err
 	}
-	return conn.NewTCPConnect(dial, true, t.conf.ID), nil
+	return conn.NewTCPConnect(dial, true, t.conf.ID)
 }
 
 func (t *TcpService) DoConn(nodeID string, port int, ip []string) error {

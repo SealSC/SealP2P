@@ -13,7 +13,7 @@ import (
 )
 
 type Node struct {
-	conf    *conf.Config
+	conf    conf.Config
 	key     *rsa.PrivateKey
 	network *Network
 	h       Handler
@@ -130,14 +130,11 @@ func LocalNode() NetNode {
 	return localNode
 }
 
-func InitLocalNode(conf *conf.Config) error {
+func InitLocalNode(conf conf.Config) error {
 	newLock.Lock()
 	newLock.Unlock()
 	if localNode != nil {
 		return nil
-	}
-	if conf == nil {
-		return errors.New("conf is nil")
 	}
 	n := &Node{h: NewDefaultHandler(), conf: conf}
 	key, err := readRSA(conf.PKFile)

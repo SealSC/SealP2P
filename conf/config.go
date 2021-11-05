@@ -21,7 +21,7 @@ func (c Config) Clone(id string) *Config {
 	}
 }
 
-var DefaultConfig = &Config{
+var DefaultConfig = Config{
 	ID:            "",
 	ClientOnly:    false,
 	PKFile:        "SealP2PPK",

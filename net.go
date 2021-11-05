@@ -4,7 +4,6 @@ import (
 	"net"
 	"github.com/SealSC/SealP2P/conn"
 	"github.com/SealSC/SealP2P/conn/msg"
-	"errors"
 	"github.com/SealSC/SealP2P/conf"
 )
 
@@ -20,7 +19,7 @@ type Network struct {
 	Connector
 }
 
-func NewNetwork(conf *conf.Config, h Handler) (*Network, error) {
+func NewNetwork(conf conf.Config, h Handler) (*Network, error) {
 	t, err := NewTcpService(conf)
 	if err != nil {
 		return nil, err
@@ -54,33 +53,4 @@ func SendUdp(address string, p *msg.Message) error {
 	connect := conn.NewUDPConnect(dial, false)
 	connect.Write(p)
 	return nil
-}
-
-type TCPListener struct {
-	l      net.Listener
-	nodeID string
-}
-
-func ListenTCP(nodeID, address string) (*TCPListener, error) {
-	listen, err := net.Listen("tcp", address)
-	if err != nil {
-		return nil, err
-	}
-	if nodeID == "" {
-		return nil, errors.New("nodeID empty")
-	}
-	listener := &TCPListener{l: listen, nodeID: nodeID}
-	return listener, nil
-}
-
-func (l *TCPListener) accept() (conn.TCPConnect, error) {
-	accept, err := l.l.Accept()
-	if err != nil {
-		return nil, err
-	}
-	return conn.NewTCPConnect(accept, false, l.nodeID), err
-}
-
-func (l *TCPListener) Close() error {
-	return l.l.Close()
 }

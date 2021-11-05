@@ -7,17 +7,17 @@ import (
 
 func TestNewTcpService(t *testing.T) {
 	type args struct {
-		conf *conf.Config
+		conf conf.Config
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{name: "nil config", args: args{conf: nil}, wantErr: true},
-		{name: "empty config", args: args{conf: &conf.Config{}}, wantErr: true},
+		{name: "nil config", args: args{}, wantErr: true},
+		{name: "empty config", args: args{conf: conf.Config{}}, wantErr: true},
 		{name: "default config", args: args{conf: conf.DefaultConfig}, wantErr: true},
-		{name: "default config exist node id", args: args{conf: &conf.Config{
+		{name: "default config exist node id", args: args{conf: conf.Config{
 			ID:            "xxxx",
 			ClientOnly:    conf.DefaultConfig.ClientOnly,
 			PKFile:        conf.DefaultConfig.PKFile,

@@ -8,11 +8,10 @@ import (
 	"github.com/SealSC/SealP2P/conn/msg"
 	"time"
 	"github.com/SealSC/SealP2P/conf"
-	"errors"
 )
 
 type Multicast struct {
-	conf    *conf.Config
+	conf    conf.Config
 	l       sync.Mutex
 	f       func(req *msg.Message) *msg.Message
 	started bool
@@ -24,10 +23,7 @@ func (m *Multicast) Started() bool {
 	return m.started
 }
 
-func NewMulticast(conf *conf.Config) (*Multicast, error) {
-	if conf == nil {
-		return nil, errors.New("conf is nil")
-	}
+func NewMulticast(conf conf.Config) (*Multicast, error) {
 	if conf.MulticastPort < 0 || conf.MulticastPort > 65535 {
 		return nil, fmt.Errorf("port(%d) err", conf.MulticastPort)
 	}
