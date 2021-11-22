@@ -9,19 +9,25 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
+	"encoding/base64"
 )
 
 type Message struct {
 	Family    string
 	Version   string
 	Action    string
-	Payload   []byte
-	Hash      []byte
-	Signature []byte
+	Payload   base64Byte
+	Hash      base64Byte
+	Signature base64Byte
 
 	FromID string
 	TS     int64
 	ToID   []string
+}
+type base64Byte []byte
+
+func (b base64Byte) String() string {
+	return base64.StdEncoding.EncodeToString(b)
 }
 
 func (m *Message) PackByte() []byte {
@@ -38,7 +44,7 @@ func (m *Message) PackByte() []byte {
 	return payload
 }
 
-func (m *Message) UNPackByte(payload []byte) error {
+func (m *Message) UNPackByte(payload []byte) (err error) {
 	index := bytes.IndexByte(payload, '\n')
 	if index < 0 {
 		return nil
@@ -53,8 +59,19 @@ func (m *Message) UNPackByte(payload []byte) error {
 	m.FromID = string(split[1])
 	m.Action = string(split[2])
 	m.TS, _ = strconv.ParseInt(string(split[3]), 10, 64)
-	m.ToID = strings.Split(string(split[4]), ";")
-	m.Hash = split[5]
-	m.Payload = body
+	s := strings.TrimSpace(string(split[4]))
+	if len(s) != 0 {
+		m.ToID = strings.Split(s, ";")
+	}
+	m.Hash, err = base64.StdEncoding.DecodeString(string(split[5]))
+	if err != nil {
+		return
+	}
+	if len(body) > 0 {
+		m.Payload, err = base64.StdEncoding.DecodeString(string(body))
+		if err != nil {
+			return
+		}
+	}
 	return nil
 }

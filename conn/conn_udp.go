@@ -49,8 +49,5 @@ func (d *DefaultUDPConnect) Read() *msg.Message {
 	}
 	payload := &msg.Message{}
 	err = payload.UNPackByte(all)
-	if payload.Action == "" {
-		return nil
-	}
 	return payload
 }
